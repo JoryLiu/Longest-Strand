@@ -1,9 +1,11 @@
 # Longest-Strand
 
+```
 ├── main.cpp
 └── Inputs
     ├── ...
     └── ...
+```
 
 ##Compilation
 
