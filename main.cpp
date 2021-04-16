@@ -34,52 +34,61 @@ vector<BYTE> readFile(const string filename) {
     return v;
 }
 
-vector<BYTE> LCS(const vector<BYTE>& v1, const vector<BYTE>& v2) {
-    if (v1.empty() || v2.empty()) return vector<BYTE>();
-
-    // build L[m+1][n+1] in bottom up fashion
-    int m = v1.size();
-    int n = v2.size();
-    vector<vector<int>> L(m + 1, vector<int>(n + 1));
-
+vector<BYTE> LCS(vector<BYTE> X, vector<BYTE> Y)
+{
+    int m = X.size();
+    int n = Y.size();
+    // Create a table to store lengths of longest common
+    // suffixes of substrings.   Note that LCSuff[i][j]
+    // contains length of longest common suffix of X[0..i-1]
+    // and Y[0..j-1]. The first row and first column entries
+    // have no logical meaning, they are used only for
+    // simplicity of program
+    vector<vector<int>> LCSuff(m + 1, vector<int>(n + 1));
+ 
+    // To store length of the longest common substring
+    int len = 0;
+ 
+    // To store the index of the cell which contains the
+    // maximum value. This cell's index helps in building
+    // up the longest common substring from right to left.
+    int row, col;
+ 
+    /* Following steps build LCSuff[m+1][n+1] in bottom
+       up fashion. */
     for (int i = 0; i <= m; i++) {
         for (int j = 0; j <= n; j++) {
             if (i == 0 || j == 0)
-                L[i][j] = 0;
-            else if (v1[i - 1] == v2[j - 1])
-                L[i][j] = L[i - 1][j - 1] + 1;
+                LCSuff[i][j] = 0;
+ 
+            else if (X[i - 1] == Y[j - 1]) {
+                LCSuff[i][j] = LCSuff[i - 1][j - 1] + 1;
+                if (len < LCSuff[i][j]) {
+                    len = LCSuff[i][j];
+                    row = i;
+                    col = j;
+                }
+            }
             else
-                L[i][j] = max(L[i - 1][j], L[i][j - 1]);
+                LCSuff[i][j] = 0;
         }
     }
 
-    // get LCS
-    int index = L[m][n];
+    vector<BYTE> lcs(len);
 
-    // Create a character array to store the lcs string
-    vector<BYTE> lcs(index);
-
-    // Start from the right-most-bottom-most corner and
-    // one by one store characters in lcs[]
-    int i = m, j = n;
-    while (i > 0 && j > 0) {
-        // If current character in v1 and v2 are same, then
-        // current character is part of LCS
-        if (v1[i - 1] == v2[j - 1]) {
-            lcs[index - 1] = v1[i - 1];  // Put current character in result
-            i--;
-            j--;
-            index--;  // reduce values of i, j and index
+    if (len) {
+        // traverse up diagonally form the (row, col) cell
+        // until LCSuff[row][col] != 0
+        while (LCSuff[row][col] != 0) {
+            lcs[--len] = X[row - 1]; // or Y[col-1]
+    
+            // move diagonally up to previous cell
+            row--;
+            col--;
         }
-
-        // If not same, then find the larger of two and
-        // go in the direction of larger value
-        else if (L[i - 1][j] > L[i][j - 1])
-            i--;
-        else
-            j--;
     }
-
+ 
+    // required longest common substring
     return lcs;
 }
 
@@ -176,9 +185,13 @@ int main() {
                 longest_strand = common_strand;
         }
 
-    cout << "The longest strand of bytes is:" << endl;
-    for (auto b : longest_strand) cout << std::hex << int(b);
-    cout << endl;
+    // clog << "The longest strand of bytes is:" << endl;
+    // for (auto b : longest_strand) clog << std::hex << int(b);
+    // clog << endl;
+
+    cout << "The length of the longest strand of bytes is: " +
+                to_string(longest_strand.size())
+         << endl;
 
     auto end = system_clock::now();
     auto duration = duration_cast<microseconds>(end - start);
@@ -192,7 +205,7 @@ int main() {
         if (offset != -1)
             cout << "The longest strand of bytes appears in " +
                         input_file_paths[i] + " and the offset is " +
-                        to_string(i)
+                        to_string(offset)
                  << endl;
     }
 
